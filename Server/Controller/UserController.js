@@ -1,10 +1,13 @@
 import UserModel from "../Models/UserModel.js";
 import asyncHandler from "express-async-handler";
 import bycrypt from "bcryptjs";
+import genToken from "../Utils/GenToken.js";
+
 
 
 export const CreateUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+    const email = req.body.email
+    const password = req.body.password
 
     try {
         const emailExist = await UserModel.findOne({ email });
@@ -39,7 +42,9 @@ export const CreateUser = asyncHandler(async (req, res) => {
 
 export const UserLogin = asyncHandler(
     async(req,res)=>{
-        const {email, password }= req.body 
+        const email = req.body.email
+        const password = req.body.password 
+
         if(!email|| !password){
             res.status(400).json({
                 success:false,
@@ -47,30 +52,50 @@ export const UserLogin = asyncHandler(
             })
         }
         try {
-            const userExist = await UserModel.findOne({email})
+            const existingUser = await UserModel.findOne({email:email})
 
-            if(userExist && await bycrypt.compare(password,userExist.password)){
-                res.status(200).json({
-                    success:true,
-                    message:"Login successfull",
-                    data:{
-                        userId:userExist.id,
-                        email:userExist.email,
-                        token:token
-                    }
+            if(existingUser){
+                const isMatched = await bycrypt.compare(
+                    password,
+                    existingUser.password
+                )
+
+                if(isMatched){
+                    const token = genToken({id:existingUser.id})
+                    res.status(200).json({
+                        success:true,
+                        message:"User login succesful",
+                        data:{
+                            userId:existingUser.id,
+                            email:existingUser.email,
+                            token:token
+                        }
+                    })
+                }else {
+                    res.status(400).json({
+                        success:false,
+                        message:"invalid password "
+                    })
+                }
+            }else{
+                res.status(400).json({
+                    success:false,
+                    message:"invalid credential "
                 })
             }
-
         } catch (error) {
-            
+            console.log(error.message)
+            res.send(400).json({
+                success:false,
+                message:error
+            })
         }
     }
 )
 
 export const  GetUserProfie = asyncHandler(
     async(req,res)=>{
-        const User = await UserModel.findById()
-
+        const User = await UserModel.findById(req.userAuth.id)
         res.status(200).json({
             success:true,
             message:"Profie Page",

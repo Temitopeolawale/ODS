@@ -3,10 +3,6 @@ import mongoose from "mongoose"
 const Schema = mongoose.Schema
 
 const User = new Schema({
-    username :{
-        type:String,
-        required:true
-    },
     email:{
         type :String ,
         required: true
@@ -17,7 +13,7 @@ const User = new Schema({
     },
     verification_code:{
         type:Number,
-        required:true
+        required:false
     },
     verified:{
         type:Boolean,

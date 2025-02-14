@@ -187,7 +187,7 @@ export async function userQuestions (ws,data,context){
         //most recen messages 
         const mostRecenMessage =  JSON.stringify(messages.data.reverse()[0].content[0].text.value)
 
-        console.log('Assistant Message:', assistantMessage?.content[0]?.text?.value)
+        console.log('Assistant Message:', mostRecenMessage)
 
         sendMessage(ws, 'response', {
             content: mostRecenMessage,
