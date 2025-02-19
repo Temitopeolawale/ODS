@@ -2,8 +2,11 @@ import UserModel from "../Models/UserModel.js";
 import asyncHandler from "express-async-handler";
 import bycrypt from "bcryptjs";
 import genToken from "../Utils/GenToken.js";
+import { sendEmail } from "../Config/email.js";
 
-
+function generateOTP(){
+    return Math.floor(100000 + Math.random() * 900000)
+}
 
 export const CreateUser = asyncHandler(async (req, res) => {
     const email = req.body.email
@@ -27,6 +30,13 @@ export const CreateUser = asyncHandler(async (req, res) => {
             password: hashedPassword
         });
 
+        let otp = generateOTP()
+
+        user.verification_code = otp 
+        await user.save()
+        sendEmail(user.id ,otp,email)
+
+
         res.status(201).json({
             success: true,
             message: "User Created",
@@ -40,6 +50,37 @@ export const CreateUser = asyncHandler(async (req, res) => {
     }
 });
 
+export const verifyOtp = asyncHandler(
+    async(req,res)=>{
+        const email = req.body.email
+        const otp = req.body.otp
+
+        try {
+            const userExist = await UserModel.findOne({email:email,verification_code:otp})
+
+        if(!userExist){
+            res.status(409).json({
+                success:false,
+                message:"Email does not exist",
+            })
+        }
+         if (userExist.verification_code ==otp){
+            await userExist.updateOne({isVerified :true})
+            res.status(200).json({
+                success:true,
+                message:"Verification Successful ",
+                data:{
+                    verified:userExist.isVerified
+                }
+            })
+        }
+
+        } catch (error) {
+            console.log(error.message)
+        }
+    }
+)
+
 export const UserLogin = asyncHandler(
     async(req,res)=>{
         const email = req.body.email
@@ -52,32 +93,35 @@ export const UserLogin = asyncHandler(
             })
         }
         try {
-            const existingUser = await UserModel.findOne({email:email})
+            const userFound = await UserModel.findOne({email:email})
 
-            if(existingUser){
-                const isMatched = await bycrypt.compare(
-                    password,
-                    existingUser.password
-                )
-
-                if(isMatched){
-                    const token = genToken({id:existingUser.id})
-                    res.status(200).json({
-                        success:true,
-                        message:"User login succesful",
-                        data:{
-                            userId:existingUser.id,
-                            email:existingUser.email,
-                            token:token
-                        }
-                    })
-                }else {
-                    res.status(400).json({
-                        success:false,
-                        message:"invalid password "
-                    })
+            if(userFound.isVerified == true){
+                if(userFound){
+                    const isMatched = await bycrypt.compare(
+                        password,
+                        userFound.password
+                    )
+    
+                    if(isMatched){
+                        const token = genToken({id:userFound.id})
+                        res.status(200).json({
+                            success:true,
+                            message:"User login succesful",
+                            data:{
+                                userId:userFound.id,
+                                email:userFound.email,
+                                token:token
+                            }
+                        })
+                    }else {
+                        res.status(400).json({
+                            success:false,
+                            message:"invalid password "
+                        })
+                    }
                 }
-            }else{
+            }
+           else{
                 res.status(400).json({
                     success:false,
                     message:"invalid credential "
