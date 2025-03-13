@@ -5,6 +5,7 @@ import cors from "cors"
 import dbConnect from "../Config/dbConnet.js"
 import userRouter from "../Router/UserRouter.js"
 import imageAnalysis from "../Router/AnalysingRouter.js"
+import sessionRouter from "../Router/SessionRouter.js"
 
 import morgan from "morgan"
 
@@ -27,5 +28,6 @@ app.use(morgan('dev'))
 //routes
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/analyse",imageAnalysis)
+app.use("/api/v1/session",sessionRouter)
 
 export default app

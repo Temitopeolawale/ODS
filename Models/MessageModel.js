@@ -1,45 +1,45 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const MessageSchema = new mongoose.Schema({
-    messageId: {
-        type: String,
-        required: true,
-        unique: true
-    },
     threadId: {
         type: String,
         required: true,
         index: true
     },
-    role: {
-        type: String,
-        enum: ['user', 'assistant', 'system'],
-        required: true
-    },
     content: {
         type: String,
         required: true
+    },
+    imageURl:{
+      type:String,
+    },
+    role: {
+        type: String,
+        required: true,
+        enum: ['user', 'assistant', 'system']
+    },
+    messageId: {
+        type: String,
+        required: true,
+        unique: true
     },
     created_at: {
         type: Date,
         default: Date.now
     },
     metadata: {
-        type: mongoose.Schema.Types.Mixed,
+        type: Object,
         default: {}
+        // Can contain:
+        // - detectionId: reference to the detection if this message is related to an object detection
+        // - timestamp: when the detection occurred
+        // - boundingBox: coordinates of detected objects
     }
-}, {
-    timestamps: true
 });
 
-// Static method to find messages by thread
-MessageSchema.statics.findByThreadId = async function(threadId) {
-    return await this.find({ threadId }).sort({ created_at: 1 });
-};
+// Create a compound index for efficient thread message retrieval
+MessageSchema.index({ threadId: 1, created_at: 1 });
 
-// Method to create a new message
-MessageSchema.statics.createMessage = async function(messageData) {
-    return await this.create(messageData);
-};
+const Message = mongoose.model("Message", MessageSchema);
 
-export default mongoose.model('Message', MessageSchema);
+export default Message;
