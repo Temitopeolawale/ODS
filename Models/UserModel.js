@@ -19,7 +19,12 @@ const User = new Schema({
         type:Boolean,
         default:false
     },
-    
+    reset_password_code: {
+        type: Number
+    },
+    reset_password_expiry: {
+        type: Date
+    }
     
 },{
     timestamps:true

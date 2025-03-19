@@ -149,3 +149,84 @@ export const  GetUserProfie = asyncHandler(
         })
     }
 )
+
+export const ForgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        // Find the user by email
+        const user = await UserModel.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Generate OTP for password reset
+        const otp = generateOTP();
+
+        // Save OTP and set expiry time (15 minutes from now)
+        user.reset_password_code = otp;
+        await user.save();
+
+        // Send email with OTP
+        sendEmail(user.id, otp, email, "Password Reset");
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset OTP sent to your email"
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong"
+        });
+    }
+});
+
+
+export const ResetPassword = asyncHandler(async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+
+    
+    try {
+        // Find user by email
+        const user = await UserModel.findOne({ 
+            email, 
+            reset_password_code: otp,
+           
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired OTP"
+            });
+        }
+
+        // Hash the new password
+        const salt = await bycrypt.genSalt(10);
+        const hashedPassword = await bycrypt.hash(newPassword, salt);
+
+       
+        user.password = hashedPassword;
+        user.reset_password_code = otp;
+       
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password reset successful"
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({
+            success: false,
+            message: "password not changed "
+        });
+    }
+});
