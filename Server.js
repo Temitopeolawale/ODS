@@ -10,6 +10,8 @@ const server = http.createServer(app)
 
 initializeWebSocket(server)
 
+
+console.log("nothing")
 server.listen(PORT,(err)=>{
     err?console.log(err):console.log(`server is connected on ${PORT}`)
 })
