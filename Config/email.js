@@ -3,9 +3,9 @@ import dotenv from "dotenv"
 
 dotenv.config()
 
-const novu = new Novu(
-"12fb6e6ef58cdaa6e7517743790e1ad4"
-)
+const novu = new Novu({
+    secretKey: process.env.NOVU_SECRET_KEY
+})
 
 export const  sendEmail = async(userID,otp,email) =>{
     try {
