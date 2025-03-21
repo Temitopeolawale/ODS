@@ -14,7 +14,7 @@ const app = express()
 dbConnect()
 app.use(cors(
     {
-        origin: 'http://localhost:5173',
+        origin: 'https://visionflow-vert.vercel.app',
         credentials: true
       }
 ))
